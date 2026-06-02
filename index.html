@@ -280,13 +280,13 @@ function scores(){
   return {a,b,c,total:a+b+c};
 }
 function pct(score,max){ return Math.round((max-score)/max*100); }
-function mark(score){ return score<=1?'◎':(score<=5?'○':'△'); }
-function markClass(score){ return score<=1?'good':(score<=5?'mid':'low'); }
+function mark(score){ return score<=1?'◎':(score<=4?'○':'△'); }
+function markClass(score){ return score<=1?'good':(score<=4?'mid':'low'); }
 
 function judge(a,b,c){
   // ◎○△マーク基準で判定（バーと本文が矛盾しない設計・突出優先）
-  // m: 2=◎(0〜1点) / 1=○(2〜5点) / 0=△(6〜9点)
-  const m=[a,b,c].map(s=> s<=1?2 : (s<=5?1:0));
+  // m: 2=◎(0〜1点/89%以上) / 1=○(2〜4点/56〜78%) / 0=△(5〜9点/44%以下)
+  const m=[a,b,c].map(s=> s<=1?2 : (s<=4?1:0));
   const low =m.filter(v=>v===0).length;  // △の数
   const good=m.filter(v=>v===2).length;  // ◎の数
   // △がある＝突出あり → 総合点に関わらず個性別／全部しんどいへ（突出優先）
@@ -468,8 +468,8 @@ function drawCard(){
   rows.forEach(([lab,p,sc])=>{
     x.fillStyle='rgba(255,255,255,.9)'; x.font='600 34px '+F;
     x.fillText(lab, 150, yy+8);
-    const mk = sc<=1?'◎':(sc<=5?'○':'△');
-    const mc = sc<=1?'#5bc79a':(sc<=5?'#e0bd5c':'#cf9494');
+    const mk = sc<=1?'◎':(sc<=4?'○':'△');
+    const mc = sc<=1?'#5bc79a':(sc<=4?'#e0bd5c':'#cf9494');
     x.fillStyle=mc; x.font='800 40px '+F; x.fillText(mk, 560, yy+10);
     drawBar(x, 630, yy-22, 300, 22, p/100, '#6b5bd6', '#39b9c7');
     x.fillStyle='rgba(255,255,255,.9)'; x.font='700 34px '+F; x.textAlign='right';
