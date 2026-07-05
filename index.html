@@ -54,9 +54,44 @@ h1{font-size:25px;line-height:1.5;text-align:center;margin:.2em 0 .1em;font-weig
 .opt.sel .n{background:var(--accent);color:#fff}
 .qhead{font-size:13px;color:var(--sub);text-align:center;margin-bottom:6px}
 .qtext{font-size:18px;line-height:1.7;font-weight:700;margin:10px 0 22px;min-height:3.4em;display:flex;align-items:center}
+/* 1ページ型：設問リスト */
+.qitem{border-top:1px solid var(--line);padding-top:20px;margin-top:20px}
+.qitem:first-child{border-top:none;padding-top:4px;margin-top:0}
+.qitem .qnum{font-size:12px;color:var(--accent);font-weight:700;letter-spacing:.12em}
+.qitem .qt{font-size:15.5px;font-weight:700;line-height:1.65;margin:4px 0 10px}
+.qitem.done .qnum::after{content:' ✓';color:var(--good)}
+/* 選択肢グリッド（縦積みをやめて省スペース化＝スマホで1画面に設問が収まる） */
+.optgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.optgrid .opt{margin:0;padding:13px 10px;font-size:14px}
+.optgrid .opt .n{width:22px;height:22px;font-size:12px;margin-right:9px}
+.optgrid3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.optgrid3 .opt{margin:0;padding:13px 6px;font-size:13.5px;justify-content:center;text-align:center}
+/* スマホ最適化：冒頭カードを圧縮し、着地時に1問目が見える高さに収める */
+@media (max-width:480px){
+  .wrap{padding:12px 12px 60px}
+  .card{padding:20px 16px;border-radius:18px;margin-bottom:12px}
+  .intro-card{padding:18px 16px 14px}
+  .intro-card .eyebrow{margin-bottom:8px}
+  h1{font-size:20px}
+  .intro-card .lead{font-size:13.5px;margin:8px 0 2px}
+  .intro-card .meta{margin-top:8px}
+  .pcount{margin-bottom:12px}
+  .qitem .qt{font-size:14.5px}
+  .optgrid .opt{padding:11px 8px;font-size:13px}
+  .optgrid3 .opt{padding:11px 4px;font-size:12.5px}
+}
 .progress{height:6px;background:#e7e5df;border-radius:6px;overflow:hidden;margin-bottom:8px}
 .progress>i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .4s}
 .pcount{font-size:12px;color:var(--sub);text-align:right;margin-bottom:18px}
+/* 回答中の進捗ゲージ（スクロールしても画面上部に貼り付く） */
+.quizbar{position:sticky;top:10px;z-index:20;background:rgba(255,255,255,.94);backdrop-filter:blur(6px);
+  border:1px solid var(--line);border-radius:14px;padding:11px 14px;margin-bottom:14px;
+  box-shadow:0 4px 18px rgba(40,38,70,.10)}
+.quizbar .progress{margin-bottom:0}
+.qb-row{display:flex;justify-content:space-between;align-items:center;font-size:12.5px;font-weight:700;margin-bottom:7px}
+#qbPct{color:var(--accent)}
+#qbLeft{color:var(--sub)}
+#qbLeft.done{color:var(--good)}
 .grp{margin-bottom:26px}
 .grp h3{font-size:14.5px;margin:0 0 10px;font-weight:700}
 /* result */
@@ -105,36 +140,32 @@ h1{font-size:25px;line-height:1.5;text-align:center;margin:.2em 0 .1em;font-weig
 <body>
 <div class="wrap">
 
-  <!-- INTRO -->
-  <section id="s-intro" class="screen active">
-    <div class="card">
+  <!-- MAIN（説明＋9問＋基本情報を1ページに集約。開始ボタン・画面遷移なしで即回答できる） -->
+  <section id="s-main" class="screen active">
+    <div class="card intro-card">
       <div class="eyebrow">自分7.0</div>
       <h1>あなたの<br>4次元アップデート診断</h1>
-      <p class="lead">3次元に没入した自分を、一段上から見る視点。<br>その「アップデート状況」を、9つの質問で可視化します。</p>
-      <p class="meta">所要時間 約1分 ／ 無料 ／ 登録不要</p>
-      <button class="btn" onclick="go('attr')" style="margin-top:22px">診断をはじめる</button>
+      <p class="lead">9つの質問に答えるだけで、いまのあなたを<b>10タイプ</b>のどれかに診断します。</p>
+      <p class="meta">所要時間 約2分 ／ 無料 ／ 登録不要</p>
     </div>
-  </section>
 
-  <!-- ATTRIBUTES -->
-  <section id="s-attr" class="screen">
     <div class="card">
-      <div class="eyebrow">はじめに</div>
+      <!-- 回答中は画面上部に貼り付いて、進捗％と残り問数を常時表示 -->
+      <div class="quizbar">
+        <div class="qb-row"><span id="qbPct">回答 0/9（0%）</span><span id="qbLeft">あと 9 問</span></div>
+        <div class="progress"><i id="prog"></i></div>
+      </div>
+      <div class="qhead">ここ1ヶ月で、以下のことがどれくらいありましたか？</div>
+      <div id="qList"></div>
+    </div>
+
+    <div class="card" id="attrCard">
+      <div class="eyebrow">さいごに</div>
       <h1 style="font-size:20px">あなたについて教えてください</h1>
       <p class="lead">この回答は結果の表示にのみ使われ、スコアには影響しません。</p>
       <div id="attrForm" style="margin-top:24px"></div>
-      <button class="btn" id="attrNext" onclick="startQuiz()" disabled>診断にすすむ</button>
-    </div>
-  </section>
-
-  <!-- QUIZ -->
-  <section id="s-quiz" class="screen">
-    <div class="card">
-      <div class="progress"><i id="prog"></i></div>
-      <div class="pcount" id="pcount"></div>
-      <div class="qhead">ここ1ヶ月で、以下のことがどれくらいありましたか？</div>
-      <div class="qtext" id="qtext"></div>
-      <div id="qopts"></div>
+      <button class="btn" id="submitBtn" onclick="showResult()" disabled>結果を見る</button>
+      <p class="meta" id="submitHint"></p>
     </div>
   </section>
 
@@ -237,7 +268,8 @@ const ATTRS = [
   {key:'sex',   q:'性別', opts:['男性','女性','回答しない']}
 ];
 
-let state = {attr:{}, order:[], idx:0, ans:[]};
+let state = {attr:{}, order:[], ans:[]};
+let started=false;   // 1問目の回答で diag_start を1回だけ送る
 
 /* ---------- 画面遷移 ---------- */
 function go(id){
@@ -250,52 +282,86 @@ function toast(msg){
   clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),1800);
 }
 
-/* ---------- 属性入力 ---------- */
+/* ---------- 属性入力（設問の後・送信直前に配置） ---------- */
 function renderAttr(){
   const f=document.getElementById('attrForm'); f.innerHTML='';
   ATTRS.forEach(a=>{
     const g=document.createElement('div'); g.className='grp';
     g.innerHTML='<h3>'+a.q+'</h3>';
+    const grid=document.createElement('div'); grid.className='optgrid3';
     a.opts.forEach(o=>{
       const b=document.createElement('button'); b.className='opt'; b.textContent=o;
       b.onclick=()=>{
         state.attr[a.key]=o;
         [...g.querySelectorAll('.opt')].forEach(x=>x.classList.remove('sel'));
         b.classList.add('sel');
-        document.getElementById('attrNext').disabled = !(state.attr.count&&state.attr.age&&state.attr.sex);
+        updateSubmit();
       };
-      g.appendChild(b);
+      grid.appendChild(b);
     });
+    g.appendChild(grid);
     f.appendChild(g);
   });
 }
 
-/* ---------- クイズ ---------- */
+/* ---------- クイズ（9問を1ページに一覧表示） ---------- */
 function shuffle(arr){ for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]];} return arr; }
-function startQuiz(){
+function renderQuiz(){
   state.order = shuffle([...Array(QUESTIONS.length).keys()]);
-  state.idx=0; state.ans=new Array(QUESTIONS.length).fill(null);
-  track('diag_start',{age:state.attr.age, sex:state.attr.sex, count:state.attr.count});
-  go('quiz'); renderQ();
-}
-function renderQ(){
-  const qi = state.order[state.idx];
-  const q = QUESTIONS[qi];
-  document.getElementById('qtext').textContent = q.t;
-  document.getElementById('prog').style.width = ((state.idx)/QUESTIONS.length*100)+'%';
-  document.getElementById('pcount').textContent = (state.idx+1)+' / '+QUESTIONS.length;
-  const box=document.getElementById('qopts'); box.innerHTML='';
-  SCALE.forEach((label,score)=>{
-    const b=document.createElement('button'); b.className='opt';
-    if(state.ans[qi]===score) b.classList.add('sel');
-    b.innerHTML='<span class="n">'+score+'</span>'+label;
-    b.onclick=()=>{ state.ans[qi]=score; next(); };
-    box.appendChild(b);
+  state.ans = new Array(QUESTIONS.length).fill(null);
+  started=false;
+  const list=document.getElementById('qList'); list.innerHTML='';
+  state.order.forEach((qi,k)=>{
+    const q=QUESTIONS[qi];
+    const item=document.createElement('div'); item.className='qitem'; item.id='q-'+k;
+    item.innerHTML='<div class="qnum">Q'+(k+1)+'</div><div class="qt">'+esc(q.t)+'</div>';
+    const grid=document.createElement('div'); grid.className='optgrid';
+    SCALE.forEach((label,score)=>{
+      const b=document.createElement('button'); b.className='opt';
+      b.innerHTML='<span class="n">'+score+'</span>'+label;
+      b.onclick=()=>{ answer(qi,k,score,item,b); };
+      grid.appendChild(b);
+    });
+    item.appendChild(grid);
+    list.appendChild(item);
   });
+  updateProgress();
 }
-function next(){
-  if(state.idx < QUESTIONS.length-1){ state.idx++; setTimeout(renderQ,180); }
-  else { document.getElementById('prog').style.width='100%'; setTimeout(showResult,200); }
+function answer(qi,k,score,item,btn){
+  if(!started){ started=true; track('diag_start',{}); }
+  state.ans[qi]=score;
+  item.classList.add('done');
+  [...item.querySelectorAll('.opt')].forEach(x=>x.classList.remove('sel'));
+  btn.classList.add('sel');
+  updateProgress();
+  // 次の未回答設問へ自動スクロール（全問済みなら基本情報へ）
+  setTimeout(()=>{
+    let target=null;
+    for(let j=k+1;j<state.order.length;j++){ if(state.ans[state.order[j]]===null){ target=document.getElementById('q-'+j); break; } }
+    if(!target){ for(let j=0;j<state.order.length;j++){ if(state.ans[state.order[j]]===null){ target=document.getElementById('q-'+j); break; } } }
+    if(!target) target=document.getElementById('attrCard');
+    target.scrollIntoView({behavior:'smooth',block:'center'});
+  },160);
+}
+function answeredCount(){ return state.ans.filter(v=>v!==null).length; }
+function updateProgress(){
+  const n=answeredCount();
+  const p=Math.round(n/QUESTIONS.length*100);
+  document.getElementById('prog').style.width=p+'%';
+  document.getElementById('qbPct').textContent='回答 '+n+'/'+QUESTIONS.length+'（'+p+'%）';
+  const left=document.getElementById('qbLeft');
+  if(n===QUESTIONS.length){ left.textContent='全問回答済み ✓'; left.classList.add('done'); }
+  else{ left.textContent='あと '+(QUESTIONS.length-n)+' 問'; left.classList.remove('done'); }
+  updateSubmit();
+}
+function updateSubmit(){
+  const n=answeredCount();
+  const attrsDone=!!(state.attr.count&&state.attr.age&&state.attr.sex);
+  document.getElementById('submitBtn').disabled=!(n===QUESTIONS.length&&attrsDone);
+  const hint=document.getElementById('submitHint');
+  if(n<QUESTIONS.length) hint.textContent='未回答の質問が '+(QUESTIONS.length-n)+' 問あります';
+  else if(!attrsDone) hint.textContent='上の3項目を選ぶと結果が見られます';
+  else hint.textContent='';
 }
 
 /* ---------- 採点・判定 ---------- */
@@ -342,7 +408,7 @@ function showResult(){
   const aP=pct(s.a,9), bP=pct(s.b,9), cP=pct(s.c,9);
   const repeat = state.attr.count!=='はじめて';
   LAST={num,ch,totalPct,aP,bP,cP,s};
-  track('diag_complete',{character:ch.name, pct:totalPct, age:state.attr.age, sex:state.attr.sex});
+  track('diag_complete',{character:ch.name, pct:totalPct, age:state.attr.age, sex:state.attr.sex, count:state.attr.count});
 
   document.getElementById('rName').textContent='「'+ch.name+'」';
   document.getElementById('rSub').textContent=ch.sub;
@@ -548,9 +614,9 @@ function copyUrl(){
   track('share_action',{method:'copy', character:LAST?LAST.ch.name:''});
   navigator.clipboard.writeText(shareUrl()).then(()=>toast('URLをコピーしました')).catch(()=>toast('コピーできませんでした'));
 }
-function restart(){ state={attr:{},order:[],idx:0,ans:[]}; renderAttr(); document.getElementById('attrNext').disabled=true; go('intro'); }
+function restart(){ state={attr:{},order:[],ans:[]}; renderQuiz(); renderAttr(); updateSubmit(); go('main'); }
 
-renderAttr();
+renderQuiz(); renderAttr(); updateSubmit();
 </script>
 </body>
 </html>
